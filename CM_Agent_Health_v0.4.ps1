@@ -3,7 +3,7 @@
     ConfigMgr (SCCM) Client- & Windows-Update-Diagnose, Remediation und Evaluation.
 
 .DESCRIPTION
-    Version 0.5 - getrennte Evaluierung und Remediation.
+    Version 0.4 - getrennte Evaluierung und Remediation.
 
     Betriebsarten:
       Evaluate  Ausschließlich Diagnose, keine Änderungen
@@ -26,7 +26,7 @@
       - Pending-Reboot-Erkennung, Re-Validierung, Exit-Codes, JSON-Zusammenfassung
       - -Mode Evaluate / -WhatIf für gefahrlosen Breitenausrollen
 
-    Änderungen in v0.5:
+    Änderungen in v0.4:
       - UseWUServer wird korrekt aus dem Unterschlüssel WindowsUpdate\AU gelesen
       - WUServer/WUStatusServer werden aus der Registry ausgewertet und ausgegeben
       - SoftwareDistribution wird auf übermäßige Eintragszahlen geprüft
@@ -69,23 +69,23 @@
     Unterdrückt die Konsolenausgabe (Logdatei und JSON-Ausgabe bleiben erhalten).
 
 .EXAMPLE
-    .\CM_Agent_Health_v0.5.ps1 -Mode Evaluate
+    .\CM_Agent_Health_v0.4.ps1 -Mode Evaluate
     Nur Diagnose, kein Eingriff.
 
 .EXAMPLE
-    .\CM_Agent_Health_v0.5.ps1 -Mode Light -WhatIf
+    .\CM_Agent_Health_v0.4.ps1 -Mode Light -WhatIf
     Zeigt, welche Reparaturen ausgeführt würden, ohne sie durchzuführen.
 
 .EXAMPLE
-    .\CM_Agent_Health_v0.5.ps1 -Mode Deep
+    .\CM_Agent_Health_v0.4.ps1 -Mode Deep
     Tiefenreparatur nur bei einem passenden Symptom.
 
 .EXAMPLE
-    .\CM_Agent_Health_v0.5.ps1 -Mode Deep -Force
+    .\CM_Agent_Health_v0.4.ps1 -Mode Deep -Force
     Erzwingt den WU-Cache-Reset unabhängig vom Diagnoseergebnis.
 
 .NOTES
-    Version : 0.5
+    Version : 0.4
     Laufzeit: Mit -Mode Deep und DISM /RestoreHealth + SFC sind 30-60 Minuten
               realistisch. Der Standard-Timeout von "Skripte ausführen" in ConfigMgr
               liegt bei 60 Minuten - ggf. als Paket/Task mit eigenem Timeout ausrollen.
@@ -130,7 +130,7 @@ $script:IssueDetails    = [ordered]@{}
 $script:InitialIssueDetails = [ordered]@{}
 $script:RemediationResults = [System.Collections.Generic.List[object]]::new()
 $script:RebootPending   = $false
-$script:ScriptName      = 'CM_Agent_Health_v0.5.ps1'
+$script:ScriptName      = 'CM_Agent_Health_v0.4.ps1'
 $script:SoftwareDistributionEntryCount = 0
 $script:WUConfiguration = [ordered]@{}
 
@@ -1115,7 +1115,7 @@ $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 try {
     Initialize-Log
     Write-CMLog '===========================================================' 1
-    Write-CMLog "=== Start CM Agent Health v0.5 auf $env:COMPUTERNAME ===" 1
+    Write-CMLog "=== Start CM Agent Health v0.4 auf $env:COMPUTERNAME ===" 1
     Write-CMLog "=== Modus: $Mode$(if ($Force) { ' [Force]' })$(if ($WhatIfPreference) { ' [WhatIf]' }) ===" 1
     Write-CMLog "=== PowerShell $($PSVersionTable.PSVersion) | OS $([System.Environment]::OSVersion.Version)" 1
 
@@ -1151,7 +1151,7 @@ try {
     $isCompliant = $script:DetectedIssues.Count -eq 0 -and $failedRemediations.Count -eq 0
     $summary = [ordered]@{
         ComputerName    = $env:COMPUTERNAME
-        ScriptVersion   = '0.5'
+        ScriptVersion   = '0.4'
         Timestamp       = (Get-Date).ToString('o')
         Mode            = $Mode
         Force           = $Force.IsPresent
@@ -1170,7 +1170,7 @@ try {
     }
 
     Write-CMLog "=== Ergebnis: $(if ($summary.Compliant) { 'COMPLIANT' } else { 'NON-COMPLIANT' }) | Dauer: $($summary.DurationMinutes) min | Neustart nötig: $($script:RebootPending) ===" $(if ($summary.Compliant) { 1 } else { 2 })
-    Write-CMLog '=== CM Agent Health v0.5 beendet ===' 1
+    Write-CMLog '=== CM Agent Health v0.4 beendet ===' 1
 
     # Maschinenlesbare Ausgabe für "Skripte ausführen" / Configuration Items.
     Write-Output ($summary | ConvertTo-Json -Compress -Depth 4)

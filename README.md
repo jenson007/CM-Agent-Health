@@ -1,6 +1,6 @@
 # CM Agent Health
 
-`CM_Agent_Health_v0.5.ps1` diagnostiziert und repariert typische Probleme des
+`CM_Agent_Health_v0.4.ps1` diagnostiziert und repariert typische Probleme des
 Microsoft Configuration Manager Clients und der Windows-Update-Komponenten auf
 Windows 10 und Windows 11.
 
@@ -33,25 +33,25 @@ Co-Management-Vorgaben getestet werden.
 
 ```powershell
 # Nur Diagnose, ohne Änderungen
-.\CM_Agent_Health_v0.5.ps1 -Mode Evaluate
+.\CM_Agent_Health_v0.4.ps1 -Mode Evaluate
 
 # Geplante Änderungen anzeigen
-.\CM_Agent_Health_v0.5.ps1 -Mode Light -WhatIf
+.\CM_Agent_Health_v0.4.ps1 -Mode Light -WhatIf
 
 # Light-Behandlung unabhängig davon ausführen, ob zuvor ein Fehler erkannt wurde
-.\CM_Agent_Health_v0.5.ps1 -Mode Light
+.\CM_Agent_Health_v0.4.ps1 -Mode Light
 
 # Befundabhängige Tiefenbehandlung
-.\CM_Agent_Health_v0.5.ps1 -Mode Deep
+.\CM_Agent_Health_v0.4.ps1 -Mode Deep
 
 # WU-Cache-Reset ausdrücklich ohne passenden Befund erzwingen
-.\CM_Agent_Health_v0.5.ps1 -Mode Deep -Force
+.\CM_Agent_Health_v0.4.ps1 -Mode Deep -Force
 
 # WSUS-Konfiguration validieren und UseWUServer bei vollständigen Endpunkten setzen
-.\CM_Agent_Health_v0.5.ps1 -Mode Light -EnforceWSUS
+.\CM_Agent_Health_v0.4.ps1 -Mode Light -EnforceWSUS
 
 # Eigenen Grenzwert für SoftwareDistribution verwenden
-.\CM_Agent_Health_v0.5.ps1 -Mode Evaluate -SoftwareDistributionEntryThreshold 250000
+.\CM_Agent_Health_v0.4.ps1 -Mode Evaluate -SoftwareDistributionEntryThreshold 250000
 ```
 
 Die Tiefenreparatur kann `SoftwareDistribution` und `catroot2` zurücksetzen und
