@@ -1,8 +1,12 @@
 # CM Agent Health
 
-`CM_Agent_Health_v0.5.ps1` diagnostiziert und repariert typische Probleme des
+`CM_Agent_Health_v0.6.ps1` diagnostiziert und repariert typische Probleme des
 Microsoft Configuration Manager Clients und der Windows-Update-Komponenten auf
 Windows 10 und Windows 11.
+
+Das Skript richtet sich ausschließlich an ConfigMgr-Clients, die ihre
+Softwareupdates über einen WSUS beziehungsweise einen ConfigMgr Software Update
+Point beziehen. Für reine WUfB-/Intune-Geräte ist es nicht vorgesehen.
 
 Das Skript prüft unter anderem den ConfigMgr-Dienst, WMI, den Windows Component
 Store, geschützte Systemdateien mit SFC, Windows Update, den letzten installierten
@@ -23,13 +27,36 @@ Die WSUS-Werte werden aus ihren tatsächlichen Registry-Pfaden gelesen:
 | `Light` | Diagnose, risikoarme und symptombezogene Behandlung, Defender-Signaturupdate sowie ConfigMgr-Zyklen |
 | `Deep` | Wie Light; zusätzlich WMI/DISM/SFC- und WU-Cache-Reparaturen bei passenden Symptomen |
 
-`-Mode Deep -Force` setzt `SoftwareDistribution` und `catroot2` unabhängig vom
-Diagnoseergebnis zurück. Ohne `-Force` erfolgt dieser Eingriff nur bei passenden
-Symptomen, beispielsweise veralteten Windows-Updates oder mehr als 100.000
-Einträgen in `SoftwareDistribution`. Beim Cache-Reset werden die beteiligten
-Dienste temporär deaktiviert und anschließend auf ihren exakten Start- und
-Laufzustand zurückgesetzt. Ein persistentes Journal ermöglicht die
-Wiederherstellung nach einem abgebrochenen Lauf.
+## Einsatz über "Skripte ausführen" in ConfigMgr
+
+Die ConfigMgr-Funktion "Skripte ausführen" erlaubt höchstens zehn Parameter und
+kann `[switch]`-Parameter nicht befüllen. Das Skript hat deshalb genau zehn
+Parameter, die alle als `[bool]` deklariert sind. Werte, die nicht von außen
+steuerbar sein sollen – Logpfad, Logrotation, Konsolenausgabe, `EnforceWSUS` und
+das Überspringen der SFC-Prüfung – sind fest im Skriptkopf hinterlegt.
+
+Das Log wird unter `%SystemDrive%\ProgramData\SWP\Logs\CM_AgentHealth.log`
+geschrieben und ist in CMTrace inklusive Zeit, Zeitzone und Thread lesbar.
+
+## Forcierte Remediationen
+
+| Parameter | Wirkung | Voraussetzung |
+| --- | --- | --- |
+| `-ForceWUReset $true` | WU-Cache-Reset, Reaktivierung der Update-Dienste, `UseWUServer = 1`, Erneuerung der WSUS-Client-Identität | `-Mode Deep` |
+| `-ForceWMIReset $true` | WMI-Salvage, DISM/SFC-Reparatur und ConfigMgr-Policy-Reset | `-Mode Deep` |
+| `-ForceDefenderReset $true` | Aktualisierung der Defender-Signaturen | – |
+| `-ForceReboot $true` | Rückgabe von `3010`, damit ConfigMgr den Neustart anstößt | – |
+
+Ohne diese Schalter erfolgen die Eingriffe nur bei passenden Symptomen,
+beispielsweise veralteten Windows-Updates oder mehr als 100.000 Einträgen in
+`SoftwareDistribution`.
+
+Beim Cache-Reset werden die beteiligten Dienste temporär deaktiviert und
+gestoppt und anschließend auf ihren exakten Start- und Laufzustand
+zurückgesetzt. Dienste, die Windows nicht deaktivieren lässt (etwa `cryptsvc`),
+werden lediglich gestoppt und blockieren die Remediation nicht mehr. Ein
+persistentes Journal ermöglicht die Wiederherstellung nach einem abgebrochenen
+Lauf.
 
 ## Aktualitätsgrenzen
 
@@ -53,43 +80,47 @@ Co-Management-Vorgaben getestet werden.
 
 ```powershell
 # Nur Diagnose, ohne Änderungen
-.\CM_Agent_Health_v0.5.ps1 -Mode Evaluate
+.\CM_Agent_Health_v0.6.ps1 -Mode Evaluate
 
 # Geplante Änderungen anzeigen
-.\CM_Agent_Health_v0.5.ps1 -Mode Light -WhatIf
+.\CM_Agent_Health_v0.6.ps1 -Mode Light -WhatIf
 
 # Light-Behandlung unabhängig davon ausführen, ob zuvor ein Fehler erkannt wurde
-.\CM_Agent_Health_v0.5.ps1 -Mode Light
+.\CM_Agent_Health_v0.6.ps1 -Mode Light
 
 # Befundabhängige Tiefenbehandlung
-.\CM_Agent_Health_v0.5.ps1 -Mode Deep
+.\CM_Agent_Health_v0.6.ps1 -Mode Deep
 
 # WU-Cache-Reset ausdrücklich ohne passenden Befund erzwingen
-.\CM_Agent_Health_v0.5.ps1 -Mode Deep -Force
+.\CM_Agent_Health_v0.6.ps1 -Mode Deep -ForceWUReset $true
 
-# WSUS-Konfiguration validieren und UseWUServer bei vollständigen Endpunkten setzen
-.\CM_Agent_Health_v0.5.ps1 -Mode Light -EnforceWSUS
+# WMI, Component Store und ConfigMgr-Policy erzwungen reparieren
+.\CM_Agent_Health_v0.6.ps1 -Mode Deep -ForceWMIReset $true
+
+# Defender-Signaturen aktualisieren und anschließend Neustart anfordern
+.\CM_Agent_Health_v0.6.ps1 -Mode Light -ForceDefenderReset $true -ForceReboot $true
 
 # Eigenen Grenzwert für SoftwareDistribution verwenden
-.\CM_Agent_Health_v0.5.ps1 -Mode Evaluate -SoftwareDistributionEntryThreshold 250000
+.\CM_Agent_Health_v0.6.ps1 -Mode Evaluate -SoftwareDistributionEntryThreshold 250000
 
-# Eigene Aktualitätsgrenzen verwenden und SFC ausnahmsweise überspringen
-.\CM_Agent_Health_v0.5.ps1 -Mode Evaluate -WindowsUpdateMaxAgeDays 45 `
-    -DefenderSignatureMaxAgeDays 7 -SkipSfcValidation
+# Eigene Aktualitätsgrenzen verwenden
+.\CM_Agent_Health_v0.6.ps1 -Mode Evaluate -WindowsUpdateMaxAgeDays 45 `
+    -DefenderSignatureMaxAgeDays 7
 ```
 
 Die Tiefenreparatur kann `SoftwareDistribution` und `catroot2` zurücksetzen und
-einen Neustart erforderlich machen. `-EnforceWSUS` sollte ausschließlich auf
-Geräten verwendet werden, die tatsächlich über WSUS beziehungsweise einen
-ConfigMgr Software Update Point verwaltet werden.
+einen Neustart erforderlich machen. `-ForceWUReset` stellt dabei auch
+`UseWUServer = 1` wieder her und sollte deshalb nur auf Geräten verwendet
+werden, die tatsächlich über WSUS beziehungsweise einen ConfigMgr Software
+Update Point verwaltet werden.
 
 ## Ergebnisdaten
 
 Der Prozess-Exitcode bleibt für Automatisierung stabil. Die JSON-Ausgabe enthält
 zusätzlich `InitialIssues`, `InitialIssueDetails`, `RemainingIssues`,
 `RemainingIssueDetails`, `WUConfiguration`, `WindowsUpdateAge`,
-`DefenderSignatureAge`, `SfcValidation`, die Zahl der geprüften
-SoftwareDistribution-Einträge und die Ergebnisse der ausgeführten
+`DefenderSignatureAge`, `SfcValidation`, die gesetzten Force-Schalter, die Zahl
+der geprüften SoftwareDistribution-Einträge und die Ergebnisse der ausgeführten
 Remediation-Schritte.
 
 ## Rückgabecodes
@@ -99,7 +130,10 @@ Remediation-Schritte.
 | `0` | Keine Symptome mehr vorhanden |
 | `1` | Symptome sind offen geblieben oder eine Remediation ist fehlgeschlagen |
 | `2` | Unerwarteter Abbruch |
-| `3010` | Bereinigt, Neustart erforderlich |
+| `3010` | Neustart erforderlich; ConfigMgr stößt den Neustart an |
+
+Ein anstehender Neustart hat Vorrang vor `1`, damit ConfigMgr den Client zuerst
+neu startet und das Ergebnis anschließend erneut bewertet werden kann.
 
 ## Lizenz
 
