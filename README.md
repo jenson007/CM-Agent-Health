@@ -35,7 +35,7 @@ Parameter, die alle als `[bool]` deklariert sind. Werte, die nicht von außen
 steuerbar sein sollen – Logpfad, Logrotation, Konsolenausgabe, `EnforceWSUS` und
 das Überspringen der SFC-Prüfung – sind fest im Skriptkopf hinterlegt.
 
-Das Log wird unter `%SystemDrive%\ProgramData\SWP\Logs\CM_AgentHealth.log`
+Das Log wird unter `%SystemDrive%\ProgramData\CMAgentHealth\Logs\CM_AgentHealth.log`
 geschrieben und ist in CMTrace inklusive Zeit, Zeitzone und Thread lesbar.
 
 ## Neu in v0.7

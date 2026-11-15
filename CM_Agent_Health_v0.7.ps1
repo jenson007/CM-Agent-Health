@@ -181,7 +181,7 @@ $ErrorActionPreference = 'Stop'
 
 # Fest verdrahtete Betriebsvorgaben. Diese Werte sollen nicht aus ConfigMgr
 # heraus steuerbar sein und belegen deshalb bewusst keinen Parameterplatz.
-$script:LogPath         = "$env:SystemDrive\ProgramData\SWP\Logs\CM_AgentHealth.log"
+$script:LogPath         = "$env:SystemDrive\ProgramData\CMAgentHealth\Logs\CM_AgentHealth.log"
 $script:LogMaxSizeMB    = 5      # Größe in MB, ab der die Logdatei nach .lo_ rotiert
 $script:Quiet           = $false # Konsolenausgabe; unter ConfigMgr ohnehin unsichtbar
 $script:DetectedIssues  = [System.Collections.Generic.HashSet[string]]::new()

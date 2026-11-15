@@ -150,7 +150,7 @@ if ($ForceWUReset -and $Mode -ne 'Deep') {
 $ErrorActionPreference = 'Stop'
 
 #$script:LogPath         = $LogPath
-$script:LogPath         = "$env:systemdrive\ProgramData\SWP\Logs\CM_AgentHealth.log"
+$script:LogPath         = "$env:systemdrive\ProgramData\CMAgentHealth\Logs\CM_AgentHealth.log"
 $script:LogMaxSizeMB    = 5    #Größe, ab der die Logdatei nach .lo_ rotiert wird. Standard: 5.
 #$script:Quiet           = $Quiet.IsPresent
 $script:Quiet           = $false
