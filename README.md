@@ -1,6 +1,6 @@
 # CM Agent Health
 
-`CM_Agent_Health_v0.6.ps1` diagnostiziert und repariert typische Probleme des
+`CM_Agent_Health_v0.7.ps1` diagnostiziert und repariert typische Probleme des
 Microsoft Configuration Manager Clients und der Windows-Update-Komponenten auf
 Windows 10 und Windows 11.
 
@@ -38,11 +38,19 @@ das Überspringen der SFC-Prüfung – sind fest im Skriptkopf hinterlegt.
 Das Log wird unter `%SystemDrive%\ProgramData\SWP\Logs\CM_AgentHealth.log`
 geschrieben und ist in CMTrace inklusive Zeit, Zeitzone und Thread lesbar.
 
+## Neu in v0.7
+
+In der WU-Remediation wird die lokale GPO-Datei
+`%windir%\System32\GroupPolicy\Machine\Registry.pol` gezielt zurückgesetzt und
+danach `gpupdate /target:computer /force` ausgeführt. Das ist **ohne neuen
+Parameter** integriert, damit das Skript weiterhin mit der ConfigMgr-Grenze von
+maximal zehn Parametern kompatibel bleibt.
+
 ## Forcierte Remediationen
 
 | Parameter | Wirkung | Voraussetzung |
 | --- | --- | --- |
-| `-ForceWUReset $true` | WU-Cache-Reset, Reaktivierung der Update-Dienste, `UseWUServer = 1`, Erneuerung der WSUS-Client-Identität | `-Mode Deep` |
+| `-ForceWUReset $true` | WU-Cache-Reset, Reaktivierung der Update-Dienste, lokaler GPO-Reset (`Machine\\Registry.pol` + `gpupdate`), `UseWUServer = 1`, Erneuerung der WSUS-Client-Identität | `-Mode Deep` |
 | `-ForceWMIReset $true` | WMI-Salvage, DISM/SFC-Reparatur und ConfigMgr-Policy-Reset | `-Mode Deep` |
 | `-ForceDefenderReset $true` | Aktualisierung der Defender-Signaturen | – |
 | `-ForceReboot $true` | Rückgabe von `3010`, damit ConfigMgr den Neustart anstößt | – |
@@ -80,31 +88,31 @@ Co-Management-Vorgaben getestet werden.
 
 ```powershell
 # Nur Diagnose, ohne Änderungen
-.\CM_Agent_Health_v0.6.ps1 -Mode Evaluate
+.\CM_Agent_Health_v0.7.ps1 -Mode Evaluate
 
 # Geplante Änderungen anzeigen
-.\CM_Agent_Health_v0.6.ps1 -Mode Light -WhatIf
+.\CM_Agent_Health_v0.7.ps1 -Mode Light -WhatIf
 
 # Light-Behandlung unabhängig davon ausführen, ob zuvor ein Fehler erkannt wurde
-.\CM_Agent_Health_v0.6.ps1 -Mode Light
+.\CM_Agent_Health_v0.7.ps1 -Mode Light
 
 # Befundabhängige Tiefenbehandlung
-.\CM_Agent_Health_v0.6.ps1 -Mode Deep
+.\CM_Agent_Health_v0.7.ps1 -Mode Deep
 
 # WU-Cache-Reset ausdrücklich ohne passenden Befund erzwingen
-.\CM_Agent_Health_v0.6.ps1 -Mode Deep -ForceWUReset $true
+.\CM_Agent_Health_v0.7.ps1 -Mode Deep -ForceWUReset $true
 
 # WMI, Component Store und ConfigMgr-Policy erzwungen reparieren
-.\CM_Agent_Health_v0.6.ps1 -Mode Deep -ForceWMIReset $true
+.\CM_Agent_Health_v0.7.ps1 -Mode Deep -ForceWMIReset $true
 
 # Defender-Signaturen aktualisieren und anschließend Neustart anfordern
-.\CM_Agent_Health_v0.6.ps1 -Mode Light -ForceDefenderReset $true -ForceReboot $true
+.\CM_Agent_Health_v0.7.ps1 -Mode Light -ForceDefenderReset $true -ForceReboot $true
 
 # Eigenen Grenzwert für SoftwareDistribution verwenden
-.\CM_Agent_Health_v0.6.ps1 -Mode Evaluate -SoftwareDistributionEntryThreshold 250000
+.\CM_Agent_Health_v0.7.ps1 -Mode Evaluate -SoftwareDistributionEntryThreshold 250000
 
 # Eigene Aktualitätsgrenzen verwenden
-.\CM_Agent_Health_v0.6.ps1 -Mode Evaluate -WindowsUpdateMaxAgeDays 45 `
+.\CM_Agent_Health_v0.7.ps1 -Mode Evaluate -WindowsUpdateMaxAgeDays 45 `
     -DefenderSignatureMaxAgeDays 7
 ```
 
